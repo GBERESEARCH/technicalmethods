@@ -120,7 +120,7 @@ class Indicators():
         low : Series
             Time series of low prices.
         time_period : Int
-            Lookback period to average over.
+            Lookback period.
 
         Returns
         -------
@@ -205,6 +205,97 @@ class Indicators():
         df['ADXR'] = (df['ADX'] + df['ADX'].shift(time_period)) / 2
     
         return df['ADX']
+    
+    
+    def williams_r(self, close, high, low, time_period):
+        """
+        Calculate Williams %R
+
+        Parameters
+        ----------
+        close : Series
+            Time series of closing prices.
+        high : Series
+            Time series of high prices.
+        low : Series
+            Time series of low prices.
+        time_period : Int
+            Lookback period.
+
+        Returns
+        -------
+        Series
+            Time series of %R.
+
+        """
+        # Create DataFrame with Price Fields
+        df = self._create_dataframe(close, high, low)
+        
+        # Calculate n-day highs and lows
+        df['nd_low'] = df['Low'].rolling(time_period).min()
+        df['nd_high'] = df['High'].rolling(time_period).max()
+        
+        
+        df['%R'] = -100 * ((df['nd_high'] - df['Close']) / 
+                                  (df['nd_high'] - df['nd_low']))
+    
+        return df['%R']
+    
+    
+    def stochastic(self, close, high, low, fast_k_period, fast_d_period=3, 
+                   slow_k_period=3, slow_d_period=3, output_type='slow'):
+        """
+        Calculate Stchastic Oscillator
+
+        Parameters
+        ----------
+        close : Series
+            Time series of closing prices.
+        high : Series
+            Time series of high prices.
+        low : Series
+            Time series of low prices.
+        fast_k_period : Int
+            Lookback period to calculate %K.
+        fast_d_period : Int
+            Lookback period to calculate %D by smoothing %K. The default is 3.
+        slow_k_period : Int
+            Lookback period to calculate Slow %K by smoothing %K. The default 
+            is 3.
+        slow_d_period : Int
+            Lookback period to calculate Slow %D by smoothing %D. The default 
+            is 3.
+        output_type : STR, optional
+            Whether to output Fast or Slow stochastics. The default is 'slow'.
+
+        Returns
+        -------
+        Series
+            Time Series of %K and %D.
+
+        """
+        # Create DataFrame with Price Fields
+        df = self._create_dataframe(close, high, low)
+                
+        # Calculate n-day highs and lows
+        df['nd_low'] = df['Low'].rolling(fast_k_period).min()
+        df['nd_high'] = df['High'].rolling(fast_k_period).max()
+                
+        # Fast stochastics
+        # Calculate %K 
+        df['%K'] = 100 * (df['Close'] - df['nd_low']) / (df['nd_high'] - df['nd_low'])
+        
+        # Calculate %D by smoothing %K
+        df['%D'] = df['%K'].rolling(fast_d_period).mean()
+        
+        # Slow stochastics apply smoothing to %K and %D
+        df['%K_slow'] = df['%K'].rolling(slow_k_period).mean()
+        df['%D_slow'] = df['%D'].rolling(slow_d_period).mean()
+        
+        if output_type == 'slow':
+            return df['%K_slow'], df['%D_slow']
+        else:
+            return df['%K'], df['%D']
     
     
     def ATR(self, close, high, low, time_period):
