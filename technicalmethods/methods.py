@@ -4,10 +4,7 @@ import pandas as pd
 
 class Indicators():
     
-    def __init__(self):
-        pass
-    
-    
+   
     def MACD(self, close, fast, slow, signal):
         """
         Calculate Moving Average Convergence Divergence 
@@ -37,11 +34,11 @@ class Indicators():
         df = pd.DataFrame(close)
         
         # Calculate fast Exponential Moving Average
-        df['EMA_fast'] = self.EMA(df['Close'], time_period=fast, 
-                                  slow_macd=slow)
+        df['EMA_fast'] = self.EMA(
+            input_series=df['Close'], time_period=fast, slow_macd=slow)
         
         # Calculate slow Exponential Moving Average
-        df['EMA_slow'] = self.EMA(df['Close'], time_period=slow)
+        df['EMA_slow'] = self.EMA(input_series=df['Close'], time_period=slow)
         
         # Calculate Price Velocity as the difference between the fast and slow 
         # averages
@@ -95,10 +92,11 @@ class Indicators():
         
         # Create columns to average the gains and losses over the specified 
         # period
-        df['Up_Avg'] = self.EMA(df['Up'], time_period=time_period, wilder=True)
+        df['Up_Avg'] = self.EMA(
+            input_series=df['Up'], time_period=time_period, wilder=True)
         
         df['Down_Avg'] = self.EMA(
-            df['Down'], time_period=time_period, wilder=True)
+            input_series=df['Down'], time_period=time_period, wilder=True)
                
         # Calculate Relative Strength
         df['Relative_Strength'] = df['Up_Avg'] / df['Down_Avg']
@@ -107,7 +105,7 @@ class Indicators():
         return df['RSI']
 
     
-    def ADX(self, close, high, low, time_period):
+    def ADX(self, high, low, close, time_period):
         """
         Calculate Average Directional Movement Index
 
@@ -137,7 +135,8 @@ class Indicators():
         
         # Calculate True Range for the day
         df['TR_1'] = self.EMA(
-            df['True_Range'], time_period=1, wilder=True, average=False)
+            input_series=df['True_Range'], time_period=1, wilder=True, 
+            average=False)
         
         # Calculate Directional Movement columns  
         df['pos_shift'] = np.where(
@@ -169,17 +168,17 @@ class Indicators():
         
         # Calculate True Range for the specified period
         df['TR_period'] = self.EMA(
-            df['True_Range'], time_period=time_period, wilder=True, 
-            average=False)
+            input_series=df['True_Range'], time_period=time_period, 
+            wilder=True, average=False)
         
         # Calculate Directional Movement for the specified period
         df['DM_plus_period'] = self.EMA(
-            df['DM_plus_1'], time_period=time_period, wilder=True, 
+            input_series=df['DM_plus_1'], time_period=time_period, wilder=True, 
             average=False)
         
         df['DM_minus_period'] = self.EMA(
-            df['DM_minus_1'], time_period=time_period, wilder=True, 
-            average=False)
+            input_series=df['DM_minus_1'], time_period=time_period, 
+            wilder=True, average=False)
         
         # Calculate Directional Indicator as Directional Movement / True Range 
         df['DI_plus_period'] = (
@@ -200,14 +199,15 @@ class Indicators():
         
         # Calculate the Average Directional Movement Index taking an EMA over 
         # the selected period 
-        df['ADX'] = self.EMA(df['DX'], time_period=time_period, wilder=True)
+        df['ADX'] = self.EMA(
+            input_series=df['DX'], time_period=time_period, wilder=True)
         
         df['ADXR'] = (df['ADX'] + df['ADX'].shift(time_period)) / 2
     
         return df['ADX']
     
     
-    def williams_r(self, close, high, low, time_period):
+    def williams_r(self, high, low, close, time_period):
         """
         Calculate Williams %R
 
@@ -242,7 +242,7 @@ class Indicators():
         return df['%R']
     
     
-    def stochastic(self, close, high, low, fast_k_period, fast_d_period=3, 
+    def stochastic(self, high, low, close, fast_k_period, fast_d_period=3, 
                    slow_k_period=3, slow_d_period=3, output_type='slow'):
         """
         Calculate Stchastic Oscillator
@@ -275,7 +275,7 @@ class Indicators():
 
         """
         # Create DataFrame with Price Fields
-        df = self._create_dataframe(close, high, low)
+        df = self._create_dataframe(high, low, close)
                 
         # Calculate n-day highs and lows
         df['nd_low'] = df['Low'].rolling(fast_k_period).min()
@@ -298,7 +298,7 @@ class Indicators():
             return df['%K'], df['%D']
     
     
-    def ATR(self, close, high, low, time_period):
+    def ATR(self, high, low, close, time_period):
         """
         Calculate Average True Range
 
@@ -328,7 +328,9 @@ class Indicators():
         # Take the Exponentially Weighted Moving Average (using Welles Wilder's 
         # specific technique of 1/N of the new value plus (N-1)/N of the 
         # previous average)
-        df['ATR'] = self.EMA(df['True_Range'], time_period, wilder=True)
+        df['ATR'] = self.EMA(
+            input_series=df['True_Range'], time_period=time_period, 
+            wilder=True)
         
         return df['ATR']
     
