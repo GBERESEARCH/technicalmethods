@@ -335,7 +335,8 @@ class Indicators():
         return df['ATR']
     
     
-    def _true_range(self, df):
+    @staticmethod
+    def _true_range(df):
         """
         Calculates the 1 day True Range given High, Low and Close prices.
 
@@ -369,7 +370,8 @@ class Indicators():
         return df['True_Range']
     
     
-    def _create_dataframe(self, *fields):
+    @staticmethod
+    def _create_dataframe(*fields):
         """
         Create new DataFrame from price series'
 
@@ -391,7 +393,8 @@ class Indicators():
         return df
     
     
-    def EMA(self, input_series, time_period, wilder=False, average=True, 
+    @staticmethod
+    def EMA(input_series, time_period, wilder=False, average=True, 
             slow_macd=None):
         """
         Calculate Exponentially Weighted Moving Average  
