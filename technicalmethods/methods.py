@@ -4,8 +4,7 @@ import pandas as pd
 pd.options.mode.chained_assignment = None
 
 
-class Indicators():
-    
+class Indicators():    
    
     @classmethod
     def MACD(cls, close, fast, slow, signal):
@@ -252,7 +251,7 @@ class Indicators():
     def stochastic(cls, high, low, close, fast_k_period, fast_d_period=3, 
                    slow_k_period=3, slow_d_period=3, output_type='slow'):
         """
-        Calculate Stchastic Oscillator
+        Calculate Stochastic Oscillator
 
         Parameters
         ----------
@@ -341,6 +340,51 @@ class Indicators():
             wilder=True)
         
         return df['ATR']
+    
+    
+    @staticmethod
+    def breakout(df, time_period=20):
+        """
+        Calculate n-day breakout 
+
+        Parameters
+        ----------
+        df : DataFrame
+            The DataFrame of historical prices.
+        time_period : Int, optional
+            The lookback window. The default is 20.
+
+        Returns
+        -------
+        nd_low : Series
+            The array of n-day lows.
+        nd_high : Series
+            The array of n-day highs.
+        flag : Series
+            Indicator whether to be long (1) or short (-1).
+
+        """
+        
+        # Calculate n-day highs and lows
+        nd_low = np.array(df['Low'].rolling(time_period).min())
+        nd_high = np.array(df['High'].rolling(time_period).max())
+        
+        # Create start point from first valid number
+        start = np.where(~np.isnan(nd_high))[0][0]
+       
+        # Create numpy array of zeros to store positions
+        flag = np.array([0]*len(nd_high))
+        
+        for row in range(start + 1, len(nd_high)):
+            if (df['High'][row] > nd_high[row-1]) or (
+                    flag[row-1] == 1 and df['Low'][row] > nd_low[row-1]):
+                flag[row] = 1
+    
+            if (df['Low'][row] < df['nd_low'][row-1]) or (
+                    flag[row-1] == -1 and df['High'][row] < nd_high[row-1]):
+                flag[row] = -1
+              
+        return nd_low, nd_high, flag
     
     
     @staticmethod
