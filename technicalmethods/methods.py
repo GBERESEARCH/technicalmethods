@@ -376,11 +376,11 @@ class Indicators():
         flag = np.array([0]*len(nd_high))
         
         for row in range(start + 1, len(nd_high)):
-            if (df['High'][row] > nd_high[row-1]) or (
+            if (df['High'][row] >= nd_high[row-1]) or (
                     flag[row-1] == 1 and df['Low'][row] > nd_low[row-1]):
                 flag[row] = 1
     
-            if (df['Low'][row] < nd_low[row-1]) or (
+            if (df['Low'][row] <= nd_low[row-1]) or (
                     flag[row-1] == -1 and df['High'][row] < nd_high[row-1]):
                 flag[row] = -1
               
