@@ -109,18 +109,59 @@ class Indicators():
 
 
     @classmethod
+    def CCI(high, low, close, time_period):
+        """
+        Calculate Commodity Channel Index
+
+        Parameters
+        ----------
+        high : Series
+            Time series of high prices.
+        low : Series
+            Time series of low prices.
+        close : Series
+            Time series of closing prices.    
+        time_period : Int
+            Lookback period.
+
+        Returns
+        -------
+        Series
+            Time series of CCI values.
+
+        """
+        # 4 Steps
+        
+        # 1. Compute todays average using High, Low and Close
+        typical_price = (high + low + close) / 3
+        
+        # 2. Compute a moving average of the n most recent average prices
+        moving_average = typical_price.rolling(time_period).mean()
+        
+        # 3. Compute the mean deviation of the n most recent typical prices     
+        mean_deviation = np.array([0.0]*len(close))
+        for i in range(len(close)):
+            mean_deviation[i] = typical_price[i - time_period+1:i+1].mad()
+        
+        # 4. Compute the Commodity Channel Index
+        cci = ((typical_price - moving_average) / (0.015 * mean_deviation))
+        
+        return cci
+
+
+    @classmethod
     def ADX(cls, high, low, close, time_period):
         """
         Calculate Average Directional Movement Index
 
         Parameters
         ----------
-        close : Series
-            Time series of closing prices.
         high : Series
             Time series of high prices.
         low : Series
             Time series of low prices.
+        close : Series
+            Time series of closing prices.    
         time_period : Int
             Lookback period.
 
