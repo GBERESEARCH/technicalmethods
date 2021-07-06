@@ -109,7 +109,7 @@ class Indicators():
 
 
     @classmethod
-    def CCI(high, low, close, time_period):
+    def CCI(cls, high, low, close, time_period):
         """
         Calculate Commodity Channel Index
 
@@ -330,7 +330,8 @@ class Indicators():
                 
         # Fast stochastics
         # Calculate %K 
-        df['%K'] = 100 * (df['Close'] - df['nd_low']) / (df['nd_high'] - df['nd_low'])
+        df['%K'] = (100 * (df['Close'] - df['nd_low']) 
+                    / (df['nd_high'] - df['nd_low']))
         
         # Calculate %D by smoothing %K
         df['%D'] = df['%K'].rolling(fast_d_period).mean()
