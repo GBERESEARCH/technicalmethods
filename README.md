@@ -5,6 +5,7 @@
 
 ### The library currently provides methods for:
   - RSI
+  - Bollinger Bands
   - MACD
   - ADX
   - Williams %R
