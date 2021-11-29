@@ -63,6 +63,67 @@ class Indicators():
 
 
     @classmethod
+    def bbands(cls, close, high=None, low=None, time_period=20, sd_up=2,
+               sd_down=2, simple_ma=True, only_close=True):
+        """
+        Calculate Bollinger Bands - Upper, Lower and Mid Moving Average
+
+        Parameters
+        ----------
+        close : Series
+            Time series of closing prices.
+        high : Series, optional
+            Time series of high prices.
+        low : Series, optional
+            Time series of low prices.
+        time_period : Int
+            Lookback period to average over.
+        sd_up : float, optional
+            The number of standard deviations above the ma the upper band
+            should be. The default is 2.
+        sd_down : float, optional
+            The number of standard deviations below the ma the upper band
+            should be. The default is 2.
+        simple_ma : Bool, optional
+            Whether to calculate a simple or exponential moving average.
+            The default is True.
+        only_close : Bool, optional
+            Whether to use just the closing price or the typical price as the
+            average of high, low and close. The default is True.
+
+        Returns
+        -------
+        upper_band : Series
+            The band of prices above the moving average.
+        ma : Series
+            The moving average calculated for the chosen lookback period
+        lower_band : Series
+            The band of prices below the moving average.
+
+        """
+        if only_close:
+            sd = close.rolling(window=time_period).std(ddof=0)
+            if simple_ma:
+                ma = close.rolling(window=time_period).mean()
+            else:
+                ma = cls.EMA(input_series=close, time_period=time_period)
+
+        else:
+            typical_price = (high + low + close) / 3
+            sd = typical_price.rolling(window=time_period).std(ddof=0)
+            if simple_ma:
+                ma = typical_price.rolling(window=time_period).mean()
+            else:
+                ma = cls.EMA(
+                    input_series=typical_price, time_period=time_period)
+
+        upper_band = ma + (sd * sd_up)
+        lower_band = ma - (sd * sd_down)
+
+        return upper_band, ma, lower_band
+
+        
+    @classmethod
     def RSI(cls, close, time_period):
         """
         Calculate Relative Strength Index
