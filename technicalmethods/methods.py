@@ -3,10 +3,13 @@ Calculate various Technical Indicators
 
 """
 
+import copy
 import numpy as np
 import pandas as pd
+from scipy.stats import linregress
 # Suppress SettingWithCopyWarning caused by slicing DataFrame
 #pd.options.mode.chained_assignment = None
+# pylint: disable=invalid-name
 
 class Indicators():
     """
@@ -122,7 +125,7 @@ class Indicators():
 
         return upper_band, ma, lower_band
 
-        
+
     @classmethod
     def RSI(cls, close, time_period):
         """
@@ -506,6 +509,67 @@ class Indicators():
                 flag[row] = -1
 
         return nd_low, nd_high, flag
+
+
+    @staticmethod
+    def trend_channel(close, high, low):
+        """
+        Calculate Trend lines above and below the price data to form a channel
+
+        Parameters
+        ----------
+        close : Series
+            Time series of closing prices.
+        high : Series
+            Time series of high prices.
+        low : Series
+            Time series of low prices.
+
+        Returns
+        -------
+        low_trend : Series.
+            Lower trend line
+        high_trend : Series.
+            High trend line
+
+        """
+        prices = pd.concat([close, high, low], axis=1)
+
+        output = copy.deepcopy(prices)
+
+        output['counter'] = (
+            (output.index.date
+             - output.index.date.min())).astype('timedelta64[D]')
+        output['counter'] = output['counter'].dt.days + 1
+
+        # high trend line
+        tmp_data = copy.deepcopy(output)
+
+        while len(tmp_data)>3:
+
+            reg_line = linregress(x=tmp_data['counter'], y=tmp_data['High'])
+            tmp_data = tmp_data.loc[tmp_data['High'] > reg_line[0]
+                                    * tmp_data['counter'] + reg_line[1]]
+
+
+        reg_line = linregress(x=tmp_data['counter'], y=tmp_data['High'])
+
+        high_trend = reg_line[0] * output['counter'] + reg_line[1]
+
+        # low trend line
+        tmp_data = output.copy()
+
+        while len(tmp_data)>3:
+
+            reg_line = linregress(x=tmp_data['counter'], y=tmp_data['Low'])
+            tmp_data = tmp_data.loc[tmp_data['Low'] < reg_line[0]
+                                    * tmp_data['counter'] + reg_line[1]]
+
+        reg_line = linregress(x=tmp_data['counter'], y=tmp_data['Low'])
+
+        low_trend = reg_line[0] * output['counter'] + reg_line[1]
+
+        return low_trend, high_trend
 
 
     @staticmethod

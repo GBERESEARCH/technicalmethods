@@ -12,6 +12,7 @@
   - Stochastics
   - ATR
   - EMA
+  - Trend Channel 
 
 &nbsp;  
 
