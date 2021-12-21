@@ -217,7 +217,7 @@ class Indicators():
 
 
     @classmethod
-    def ADX(cls, high, low, close, time_period):
+    def ADX(cls, high, low, close, time_period, dmi=False):
         """
         Calculate Average Directional Movement Index
 
@@ -273,7 +273,11 @@ class Indicators():
 
         #adxr = (adx + adx.shift(time_period)) / 2
 
-        return adx
+        if dmi:
+            return adx, di_plus_period, di_minus_period
+
+        else:
+            return adx
 
 
     @classmethod
