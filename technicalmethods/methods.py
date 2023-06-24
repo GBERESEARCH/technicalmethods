@@ -22,7 +22,7 @@ class Indicators():
         close: pd.Series, 
         fast: int, 
         slow: int, 
-        signal: int) -> tuple[pd.Series, pd.Series, pd.Series]:
+        signal: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Calculate Moving Average Convergence Divergence
 
@@ -57,11 +57,11 @@ class Indicators():
 
         # Calculate Price Velocity as the difference between the fast and slow
         # averages
-        macd =  pd.Series(ema_fast - ema_slow)
+        macd =  ema_fast - ema_slow
 
         # Calculate the Signal line as the exponentially smoothed Price
         # Velocity (using the signal parameter for period)
-        signal_line = pd.Series(cls.EMA(macd, time_period=signal))
+        signal_line = cls.EMA(macd, time_period=signal)
 
         # Calculate the MACD Histogram as the Price Velocity less the Signal
         # line
@@ -146,7 +146,7 @@ class Indicators():
     def RSI(
         cls, 
         close: pd.Series, 
-        time_period: int) -> pd.Series:
+        time_period: int) -> np.ndarray:
         """
         Calculate Relative Strength Index
 
@@ -189,7 +189,7 @@ class Indicators():
 
         # Calculate Relative Strength
         relative_strength = gain_avg / loss_avg
-        rsi = pd.Series(100 - 100 / (1 + relative_strength))
+        rsi = 100 - 100 / (1 + relative_strength)
 
         return rsi
 
@@ -248,7 +248,7 @@ class Indicators():
         low: pd.Series, 
         close: pd.Series, 
         time_period: int, 
-        dmi: bool=False) -> tuple[pd.Series, pd.Series, pd.Series] | pd.Series:
+        dmi: bool=False) -> tuple[np.ndarray, np.ndarray, np.ndarray] | np.ndarray:
         """
         Calculate Average Directional Movement Index
 
@@ -299,8 +299,8 @@ class Indicators():
 
         # Calculate the Average Directional Movement Index taking an EMA over
         # the selected period
-        adx = pd.Series(cls.EMA(
-            input_series=dir_index, time_period=time_period, wilder=True))
+        adx = cls.EMA(
+            input_series=dir_index, time_period=time_period, wilder=True)
 
         #adxr = (adx + adx.shift(time_period)) / 2
 
@@ -316,7 +316,7 @@ class Indicators():
         cls, 
         high: pd.Series, 
         low: pd.Series, 
-        time_period: int) -> tuple[pd.Series, pd.Series]:
+        time_period: int) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate Directional Movement
 
@@ -378,7 +378,7 @@ class Indicators():
             input_series=dm_minus_1, time_period=time_period,
             wilder=True, average=False)
 
-        return pd.Series(dm_plus_period), pd.Series(dm_minus_period)
+        return dm_plus_period, dm_minus_period
 
 
     @staticmethod
@@ -484,7 +484,7 @@ class Indicators():
         high: pd.Series, 
         low: pd.Series, 
         close: pd.Series, 
-        time_period: int) -> pd.Series:
+        time_period: int) -> np.ndarray:
         """
         Calculate Average True Range
 
@@ -512,8 +512,8 @@ class Indicators():
         # Take the Exponentially Weighted Moving Average (using Welles Wilder's
         # specific technique of 1/N of the new value plus (N-1)/N of the
         # previous average)
-        atr = pd.Series(cls.EMA(
-            input_series=t_range, time_period=time_period, wilder=True))
+        atr = cls.EMA(
+            input_series=t_range, time_period=time_period, wilder=True)
 
         return atr
 
@@ -522,7 +522,7 @@ class Indicators():
     def breakout(
         high: pd.Series, 
         low: pd.Series, 
-        time_period: int = 20) -> tuple[pd.Series, pd.Series, pd.Series]:
+        time_period: int = 20) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Calculate n-day breakout
 
@@ -547,14 +547,14 @@ class Indicators():
         """
 
         # Calculate n-day highs and lows
-        nd_low = pd.Series(np.array(low.rolling(time_period).min()))
-        nd_high = pd.Series(np.array(high.rolling(time_period).max()))
+        nd_low = np.array(low.rolling(time_period).min())
+        nd_high = np.array(high.rolling(time_period).max())
 
         # Create start point from first valid number
         start = np.where(~np.isnan(nd_high))[0][0]
 
         # Create numpy array of zeros to store positions
-        flag = pd.Series(np.array([0]*len(nd_high)))
+        flag = np.array([0]*len(nd_high))
 
         for row in range(start + 1, len(nd_high)):
             if (high[row] >= nd_high[row-1]) or (
