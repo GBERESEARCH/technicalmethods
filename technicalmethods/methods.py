@@ -208,7 +208,9 @@ class Indicators():
         # 3. Compute the mean deviation of the n most recent typical prices
         mean_deviation = np.array([0.0]*len(close))
         for i in range(len(close)):
-            mean_deviation[i] = typical_price[i - time_period+1:i+1].mad()
+            #mean_deviation[i] = typical_price[i - time_period+1:i+1].mad()
+            data = typical_price[i - time_period+1:i+1]
+            mean_deviation[i] = np.abs(data - data.mean(axis=0)).mean(axis=0)
 
         # 4. Compute the Commodity Channel Index
         cci = ((typical_price - moving_average) / (0.015 * mean_deviation))
