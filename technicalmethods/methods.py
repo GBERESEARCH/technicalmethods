@@ -17,7 +17,12 @@ class Indicators():
 
     """
     @classmethod
-    def MACD(cls, close, fast, slow, signal):
+    def MACD(
+        cls, 
+        close: pd.Series, 
+        fast: int, 
+        slow: int, 
+        signal: int) -> tuple[pd.Series, pd.Series, pd.Series]:
         """
         Calculate Moving Average Convergence Divergence
 
@@ -52,22 +57,30 @@ class Indicators():
 
         # Calculate Price Velocity as the difference between the fast and slow
         # averages
-        macd =  ema_fast - ema_slow
+        macd =  pd.Series(ema_fast - ema_slow)
 
         # Calculate the Signal line as the exponentially smoothed Price
         # Velocity (using the signal parameter for period)
-        signal = cls.EMA(macd, time_period=signal)
+        signal_line = pd.Series(cls.EMA(macd, time_period=signal))
 
         # Calculate the MACD Histogram as the Price Velocity less the Signal
         # line
-        histogram = macd - signal
+        histogram = macd - signal_line
 
-        return macd, signal, histogram
+        return macd, signal_line, histogram
 
 
     @classmethod
-    def bbands(cls, close, high=None, low=None, time_period=20, sd_up=2,
-               sd_down=2, simple_ma=True, only_close=True):
+    def bbands(
+        cls, 
+        close: pd.Series, 
+        high: pd.Series | None = None, 
+        low: pd.Series | None = None, 
+        time_period: int = 20, 
+        sd_up: int = 2,
+        sd_down: int = 2, 
+        simple_ma: bool = True, 
+        only_close: bool = True) -> tuple[pd.Series, pd.Series, pd.Series]:
         """
         Calculate Bollinger Bands - Upper, Lower and Mid Moving Average
 
@@ -112,6 +125,8 @@ class Indicators():
                 ma = cls.EMA(input_series=close, time_period=time_period)
 
         else:
+            high = pd.Series(high)
+            low = pd.Series(low)
             typical_price = (high + low + close) / 3
             sd = typical_price.rolling(window=time_period).std(ddof=0)
             if simple_ma:
@@ -120,14 +135,18 @@ class Indicators():
                 ma = cls.EMA(
                     input_series=typical_price, time_period=time_period)
 
-        upper_band = ma + (sd * sd_up)
-        lower_band = ma - (sd * sd_down)
+        ma = pd.Series(ma)
+        upper_band = pd.Series(ma + (sd * sd_up))
+        lower_band = pd.Series(ma - (sd * sd_down))
 
         return upper_band, ma, lower_band
 
 
     @classmethod
-    def RSI(cls, close, time_period):
+    def RSI(
+        cls, 
+        close: pd.Series, 
+        time_period: int) -> pd.Series:
         """
         Calculate Relative Strength Index
 
@@ -170,13 +189,17 @@ class Indicators():
 
         # Calculate Relative Strength
         relative_strength = gain_avg / loss_avg
-        rsi = 100 - 100 / (1 + relative_strength)
+        rsi = pd.Series(100 - 100 / (1 + relative_strength))
 
         return rsi
 
 
     @staticmethod
-    def CCI(high, low, close, time_period):
+    def CCI(
+        high: pd.Series, 
+        low: pd.Series, 
+        close: pd.Series, 
+        time_period: int) -> pd.Series:
         """
         Calculate Commodity Channel Index
 
@@ -219,7 +242,13 @@ class Indicators():
 
 
     @classmethod
-    def ADX(cls, high, low, close, time_period, dmi=False):
+    def ADX(
+        cls, 
+        high: pd.Series, 
+        low: pd.Series, 
+        close: pd.Series, 
+        time_period: int, 
+        dmi: bool=False) -> tuple[pd.Series, pd.Series, pd.Series] | pd.Series:
         """
         Calculate Average Directional Movement Index
 
@@ -270,8 +299,8 @@ class Indicators():
 
         # Calculate the Average Directional Movement Index taking an EMA over
         # the selected period
-        adx = cls.EMA(
-            input_series=dir_index, time_period=time_period, wilder=True)
+        adx = pd.Series(cls.EMA(
+            input_series=dir_index, time_period=time_period, wilder=True))
 
         #adxr = (adx + adx.shift(time_period)) / 2
 
@@ -283,7 +312,11 @@ class Indicators():
 
 
     @classmethod
-    def _directional_movement(cls, high, low, time_period):
+    def _directional_movement(
+        cls, 
+        high: pd.Series, 
+        low: pd.Series, 
+        time_period: int) -> tuple[pd.Series, pd.Series]:
         """
         Calculate Directional Movement
 
@@ -345,11 +378,15 @@ class Indicators():
             input_series=dm_minus_1, time_period=time_period,
             wilder=True, average=False)
 
-        return dm_plus_period, dm_minus_period
+        return pd.Series(dm_plus_period), pd.Series(dm_minus_period)
 
 
     @staticmethod
-    def williams_r(high, low, close, time_period):
+    def williams_r(
+        high: pd.Series, 
+        low: pd.Series, 
+        close: pd.Series, 
+        time_period: int) -> pd.Series:
         """
         Calculate Williams %R
 
@@ -381,8 +418,14 @@ class Indicators():
 
 
     @staticmethod
-    def stochastic(high, low, close, fast_k_period, slow_k_period=3,
-                   slow_d_period=3, output_type='slow'):
+    def stochastic(
+        high: pd.Series, 
+        low: pd.Series, 
+        close: pd.Series, 
+        fast_k_period: int, 
+        slow_k_period: int = 3,
+        slow_d_period: int = 3, 
+        output_type: str = 'slow') -> tuple[pd.Series, pd.Series]:
         """
         Calculate Stochastic Oscillator
 
@@ -436,7 +479,12 @@ class Indicators():
 
 
     @classmethod
-    def ATR(cls, high, low, close, time_period):
+    def ATR(
+        cls, 
+        high: pd.Series, 
+        low: pd.Series, 
+        close: pd.Series, 
+        time_period: int) -> pd.Series:
         """
         Calculate Average True Range
 
@@ -464,14 +512,17 @@ class Indicators():
         # Take the Exponentially Weighted Moving Average (using Welles Wilder's
         # specific technique of 1/N of the new value plus (N-1)/N of the
         # previous average)
-        atr = cls.EMA(
-            input_series=t_range, time_period=time_period, wilder=True)
+        atr = pd.Series(cls.EMA(
+            input_series=t_range, time_period=time_period, wilder=True))
 
         return atr
 
 
     @staticmethod
-    def breakout(high, low, time_period=20):
+    def breakout(
+        high: pd.Series, 
+        low: pd.Series, 
+        time_period: int = 20) -> tuple[pd.Series, pd.Series, pd.Series]:
         """
         Calculate n-day breakout
 
@@ -496,14 +547,14 @@ class Indicators():
         """
 
         # Calculate n-day highs and lows
-        nd_low = np.array(low.rolling(time_period).min())
-        nd_high = np.array(high.rolling(time_period).max())
+        nd_low = pd.Series(np.array(low.rolling(time_period).min()))
+        nd_high = pd.Series(np.array(high.rolling(time_period).max()))
 
         # Create start point from first valid number
         start = np.where(~np.isnan(nd_high))[0][0]
 
         # Create numpy array of zeros to store positions
-        flag = np.array([0]*len(nd_high))
+        flag = pd.Series(np.array([0]*len(nd_high)))
 
         for row in range(start + 1, len(nd_high)):
             if (high[row] >= nd_high[row-1]) or (
@@ -518,7 +569,10 @@ class Indicators():
 
 
     @staticmethod
-    def trend_channel(close, high, low):
+    def trend_channel(
+        close: pd.Series, 
+        high: pd.Series, 
+        low: pd.Series) -> tuple[pd.Series, pd.Series]:
         """
         Calculate Trend lines above and below the price data to form a channel
 
@@ -579,7 +633,10 @@ class Indicators():
 
 
     @staticmethod
-    def true_range(high, low, close):
+    def true_range(
+        high: pd.Series, 
+        low: pd.Series, 
+        close: pd.Series) -> pd.Series:
         """
         Calculates the 1 day True Range given High, Low and Close prices.
 
@@ -599,9 +656,9 @@ class Indicators():
 
         # Calculate the high minus low, absolute value of high minus yesterdays
         # close and the absolute value of the low minus yesterdays close
-        high_low = high - low
-        high_close = np.abs(high - close.shift())
-        close_low = np.abs(low - close.shift())
+        high_low = pd.Series(high - low)
+        high_close = pd.Series(np.abs(high - close.shift()))
+        close_low = pd.Series(np.abs(low - close.shift()))
 
         # Concatenate these 3 series
         ranges = pd.concat([high_low, high_close, close_low], axis=1)
@@ -639,8 +696,12 @@ class Indicators():
 
 
     @staticmethod
-    def EMA(input_series, time_period, wilder=False, average=True,
-            slow_macd=None):
+    def EMA(
+        input_series: pd.Series | np.ndarray, 
+        time_period: int, 
+        wilder: bool = False, 
+        average: bool = True,
+        slow_macd: int | None = None) -> np.ndarray:
         """
         Calculate Exponentially Weighted Moving Average
 
