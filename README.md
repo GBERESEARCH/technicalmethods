@@ -24,6 +24,31 @@ $ pip install technicalmethods
 
 &nbsp;
 
+Install in a new environment using Python venv:
+
+Create base environment of Python 3.11
+```
+$ py -3.11 -m venv .venv
+```
+Activate new environment
+```
+$ .venv\scripts\activate
+```
+Ensure pip is up to date
+``` 
+$ (.venv) python -m pip install --upgrade pip
+```
+Install Spyder
+```
+$ (.venv) python -m pip install spyder
+```
+Install package
+```
+$ (.venv) python -m pip install technicalmethods
+```
+
+&nbsp;
+
 To install in new environment using anaconda:
 ```
 $ conda create --name techmeth
@@ -34,18 +59,12 @@ $ activate techmeth
 ```
 Install Python
 ```
-(techmeth) $ conda install python==3.8.8
+(techmeth) $ conda install python==3.9
 ```
 Install Spyder
 ```
-(techmeth) $ conda install spyder==4.2.5
+(techmeth) $ conda install spyder
 ```
-Install Pandas
-```
-(techmeth) $ conda install pandas==1.1.4
-```
-
-
 Install technicalmethods
 ```
 (techmeth) $ python -m pip install technicalmethods
