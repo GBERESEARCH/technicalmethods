@@ -18,10 +18,10 @@ class Indicators():
     @classmethod
     def MACD(
         cls,
-        close: pd.Series,
+        close: pd.Series | np.ndarray,
         fast: int,
         slow: int,
-        signal: int) -> tuple[pd.Series, pd.Series, pd.Series]:
+        signal: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Calculate Moving Average Convergence Divergence
 
@@ -72,14 +72,14 @@ class Indicators():
     @classmethod
     def bbands(
         cls,
-        close: pd.Series,
-        high: pd.Series | None = None,
-        low: pd.Series | None = None,
+        close: pd.Series | np.ndarray,
+        high: pd.Series | np.ndarray | None = None,
+        low: pd.Series | np.ndarray | None = None,
         time_period: int = 20,
         sd_up: int = 2,
         sd_down: int = 2,
         simple_ma: bool = True,
-        only_close: bool = True) -> tuple[pd.Series, pd.Series, pd.Series]:
+        only_close: bool = True) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Calculate Bollinger Bands - Upper, Lower and Mid Moving Average
 
@@ -116,7 +116,9 @@ class Indicators():
             The band of prices below the moving average.
 
         """
+
         if only_close:
+            close = pd.Series(close)
             sd = close.rolling(window=time_period).std(ddof=0)
             if simple_ma:
                 ma = close.rolling(window=time_period).mean()
@@ -134,9 +136,9 @@ class Indicators():
                 ma = cls.EMA(
                     input_series=typical_price, time_period=time_period)
 
-        ma = pd.Series(ma)
-        upper_band = pd.Series(ma + (sd * sd_up))
-        lower_band = pd.Series(ma - (sd * sd_down))
+        ma = np.array(ma)
+        upper_band = np.array(ma + (sd * sd_up))
+        lower_band = np.array(ma - (sd * sd_down))
 
         return upper_band, ma, lower_band
 
@@ -144,8 +146,8 @@ class Indicators():
     @classmethod
     def RSI(
         cls,
-        close: pd.Series,
-        time_period: int) -> pd.Series:
+        close: pd.Series | np.ndarray,
+        time_period: int) -> np.ndarray:
         """
         Calculate Relative Strength Index
 
@@ -162,6 +164,7 @@ class Indicators():
             Time series of RSI values.
 
         """
+        close = pd.Series(close)
 
         # Create columns of 1-day gains and losses
         gain = np.where(
@@ -195,10 +198,10 @@ class Indicators():
 
     @staticmethod
     def CCI(
-        high: pd.Series,
-        low: pd.Series,
-        close: pd.Series,
-        time_period: int) -> pd.Series:
+        high: pd.Series | np.ndarray,
+        low: pd.Series | np.ndarray,
+        close: pd.Series | np.ndarray,
+        time_period: int) -> np.ndarray:
         """
         Calculate Commodity Channel Index
 
@@ -219,6 +222,10 @@ class Indicators():
             Time series of CCI values.
 
         """
+        low = pd.Series(low)
+        high = pd.Series(high)
+        close = pd.Series(close)
+
         # 4 Steps
 
         # 1. Compute todays average using High, Low and Close
@@ -237,17 +244,17 @@ class Indicators():
         # 4. Compute the Commodity Channel Index
         cci = (typical_price - moving_average) / (0.015 * mean_deviation)
 
-        return cci
+        return np.array(cci)
 
 
     @classmethod
     def ADX(
         cls,
-        high: pd.Series,
-        low: pd.Series,
-        close: pd.Series,
+        high: pd.Series | np.ndarray,
+        low: pd.Series | np.ndarray,
+        close: pd.Series | np.ndarray,
         time_period: int,
-        dmi: bool=False) -> tuple[pd.Series, pd.Series, pd.Series] | pd.Series:
+        dmi: bool=False) -> tuple[np.ndarray, np.ndarray, np.ndarray] | np.ndarray:
         """
         Calculate Average Directional Movement Index
 
@@ -268,6 +275,9 @@ class Indicators():
             Time series of ADX values.
 
         """
+        low = pd.Series(low)
+        high = pd.Series(high)
+        close = pd.Series(close)
 
         # Add True Range calculation
         t_range = cls.true_range(high, low, close)
@@ -312,9 +322,9 @@ class Indicators():
     @classmethod
     def _directional_movement(
         cls,
-        high: pd.Series,
-        low: pd.Series,
-        time_period: int) -> tuple[pd.Series, pd.Series]:
+        high: pd.Series | np.ndarray,
+        low: pd.Series | np.ndarray,
+        time_period: int) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate Directional Movement
 
@@ -338,6 +348,9 @@ class Indicators():
             DESCRIPTION.
 
         """
+
+        low = pd.Series(low)
+        high = pd.Series(high)
 
         # Calculate Directional Movement columns
         pos_shift = np.where(
@@ -376,15 +389,15 @@ class Indicators():
             input_series=dm_minus_1, time_period=time_period,
             wilder=True, average=False)
 
-        return dm_plus_period, dm_minus_period
+        return np.array(dm_plus_period), np.array(dm_minus_period)
 
 
     @staticmethod
     def williams_r(
-        high: pd.Series,
-        low: pd.Series,
-        close: pd.Series,
-        time_period: int) -> pd.Series:
+        high: pd.Series | np.ndarray,
+        low: pd.Series | np.ndarray,
+        close: pd.Series | np.ndarray,
+        time_period: int) -> np.ndarray:
         """
         Calculate Williams %R
 
@@ -406,24 +419,27 @@ class Indicators():
 
         """
 
+        low = pd.Series(low)
+        high = pd.Series(high)
+
         # Calculate n-day highs and lows
         nd_low = low.rolling(time_period).min()
         nd_high = high.rolling(time_period).max()
 
         percent_r = -100 * ((nd_high - close) / (nd_high - nd_low))
 
-        return percent_r
+        return np.array(percent_r)
 
 
     @staticmethod
     def stochastic(
-        high: pd.Series,
-        low: pd.Series,
-        close: pd.Series,
+        high: pd.Series | np.ndarray,
+        low: pd.Series | np.ndarray,
+        close: pd.Series | np.ndarray,
         fast_k_period: int,
         slow_k_period: int = 3,
         slow_d_period: int = 3,
-        output_type: str = 'slow') -> tuple[pd.Series, pd.Series]:
+        output_type: str = 'slow') -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate Stochastic Oscillator
 
@@ -454,6 +470,8 @@ class Indicators():
             Time Series of %K and %D.
 
         """
+        low = pd.Series(low)
+        high = pd.Series(high)
 
         # Calculate n-day highs and lows
         nd_low = low.rolling(fast_k_period).min()
@@ -461,7 +479,7 @@ class Indicators():
 
         # Fast stochastics
         # Calculate %K
-        percent_k = (100 * (close - nd_low) / (nd_high - nd_low))
+        percent_k = pd.Series((100 * (close - nd_low) / (nd_high - nd_low)))
 
         # Calculate %D by smoothing %K
         percent_d = percent_k.rolling(slow_k_period).mean()
@@ -471,18 +489,18 @@ class Indicators():
         percent_d_slow = percent_d.rolling(slow_d_period).mean()
 
         if output_type == 'slow':
-            return percent_k_slow, percent_d_slow
+            return np.array(percent_k_slow), np.array(percent_d_slow)
 
-        return percent_k, percent_d
+        return np.array(percent_k), np.array(percent_d)
 
 
     @classmethod
     def ATR(
         cls,
-        high: pd.Series,
-        low: pd.Series,
-        close: pd.Series,
-        time_period: int) -> pd.Series:
+        high: pd.Series | np.ndarray,
+        low: pd.Series | np.ndarray,
+        close: pd.Series | np.ndarray,
+        time_period: int) -> np.ndarray:
         """
         Calculate Average True Range
 
@@ -518,9 +536,9 @@ class Indicators():
 
     @staticmethod
     def breakout(
-        high: pd.Series,
-        low: pd.Series,
-        time_period: int = 20) -> tuple[pd.Series, pd.Series, pd.Series]:
+        high: pd.Series | np.ndarray,
+        low: pd.Series | np.ndarray,
+        time_period: int = 20) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Calculate n-day breakout
 
@@ -544,26 +562,32 @@ class Indicators():
 
         """
 
+        low = pd.Series(low)
+        high = pd.Series(high)
+
         # Calculate n-day highs and lows
-        nd_low = pd.Series(low.rolling(time_period).min())
-        nd_high = pd.Series(high.rolling(time_period).max())
+        nd_low = np.array(low.rolling(time_period).min())
+        nd_high = np.array(high.rolling(time_period).max())
+
+        low = np.array(low)
+        high = np.array(high)
 
         # Create start point from first valid number
         start = np.where(~np.isnan(nd_high))[0][0]
 
         # Create numpy array of zeros to store positions
-        flag = pd.Series(np.array([0]*len(nd_high)))
+        flag = np.array([0]*len(nd_high))
 
         for row in range(start + 1, len(nd_high)):
-            if (high.iloc[row] >= nd_high.iloc[row-1]) or (
-                    flag.iloc[row-1] == 1 and low.iloc[row] >
-                    nd_low.iloc[row-1]):
-                flag.iloc[row] = 1
+            if (high[row] >= nd_high[row-1]) or (
+                    flag[row-1] == 1 and low[row] >
+                    nd_low[row-1]):
+                flag[row] = 1
 
-            if (low.iloc[row] <= nd_low.iloc[row-1]) or (
-                    flag.iloc[row-1] == -1 and high.iloc[row] <
-                    nd_high.iloc[row-1]):
-                flag.iloc[row] = -1
+            if (low[row] <= nd_low[row-1]) or (
+                    flag[row-1] == -1 and high[row] <
+                    nd_high[row-1]):
+                flag[row] = -1
 
         return nd_low, nd_high, flag
 
@@ -572,7 +596,7 @@ class Indicators():
     def trend_channel(
         close: pd.Series,
         high: pd.Series,
-        low: pd.Series) -> tuple[pd.Series, pd.Series]:
+        low: pd.Series) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate Trend lines above and below the price data to form a channel
 
@@ -593,9 +617,11 @@ class Indicators():
             High trend line
 
         """
+        close, high, low = pd.Series(close), pd.Series(high), pd.Series(low)
         prices = pd.concat([close, high, low], axis=1)
 
         output = copy.deepcopy(prices)
+        output.index = pd.to_datetime(output.index)
 
         output['counter'] = (
             (output.index.date
@@ -614,7 +640,7 @@ class Indicators():
 
         reg_line = linregress(x=tmp_data['counter'], y=tmp_data['High'])
 
-        high_trend = reg_line[0] * output['counter'] + reg_line[1]
+        high_trend = np.array(reg_line[0] * output['counter'] + reg_line[1])
 
         # low trend line
         tmp_data = output.copy()
@@ -627,16 +653,16 @@ class Indicators():
 
         reg_line = linregress(x=tmp_data['counter'], y=tmp_data['Low'])
 
-        low_trend = reg_line[0] * output['counter'] + reg_line[1]
+        low_trend = np.array(reg_line[0] * output['counter'] + reg_line[1])
 
         return low_trend, high_trend
 
 
     @staticmethod
     def true_range(
-        high: pd.Series,
-        low: pd.Series,
-        close: pd.Series) -> pd.Series:
+        high: pd.Series | np.ndarray,
+        low: pd.Series | np.ndarray,
+        close: pd.Series | np.ndarray) -> np.ndarray:
         """
         Calculates the 1 day True Range given High, Low and Close prices.
 
@@ -656,6 +682,9 @@ class Indicators():
 
         # Calculate the high minus low, absolute value of high minus yesterdays
         # close and the absolute value of the low minus yesterdays close
+        high = pd.Series(high)
+        low = pd.Series(low)
+        close = pd.Series(close)
         high_low = pd.Series(high - low)
         high_close = pd.Series(np.abs(high - close.shift()))
         close_low = pd.Series(np.abs(low - close.shift()))
@@ -664,7 +693,7 @@ class Indicators():
         ranges = pd.concat([high_low, high_close, close_low], axis=1)
 
         # Calculate the True Range as the maximum of these 3 series
-        t_range = ranges.max(skipna=False, axis=1)
+        t_range = np.array(ranges.max(skipna=False, axis=1))
 
         # Suppress SettingWithCopyWarning caused by slicing DataFrame
         #pd.options.mode.chained_assignment = "warn"
@@ -701,7 +730,7 @@ class Indicators():
         time_period: int,
         wilder: bool = False,
         average: bool = True,
-        slow_macd: int | None = None) -> pd.Series:
+        slow_macd: int | None = None) -> np.ndarray:
         """
         Calculate Exponentially Weighted Moving Average
 
@@ -727,7 +756,7 @@ class Indicators():
             The smoothed price data.
 
         """
-        input_series = pd.Series(input_series)
+        input_series = np.array(input_series)
 
         # Calculate exponential smoothing factor
         alpha = 2 / (time_period + 1)
@@ -739,7 +768,7 @@ class Indicators():
             start = start + slow_macd - time_period
 
         # Create empty array to store atr values
-        output_series = pd.Series(np.array([np.nan]*len(input_series)))
+        output_series = np.array([np.nan]*len(input_series))
 
         if average:
             # Initialize with Simple Moving Average
@@ -751,31 +780,31 @@ class Indicators():
                 # (using Welles Wilder's specific technique of 1/N of the new
                 # value plus (N-1)/N of the previous average)
                 if wilder:
-                    output_series.iloc[row] = (
-                        (input_series.iloc[row]
-                         + output_series.iloc[row - 1] * (time_period - 1))
+                    output_series[row] = (
+                        (input_series[row]
+                         + output_series[row - 1] * (time_period - 1))
                         / time_period)
 
                 else:
-                    output_series.iloc[row] = (
-                        input_series.iloc[row] * alpha
-                        + (output_series.iloc[row - 1] * (1 - alpha)))
+                    output_series[row] = (
+                        input_series[row] * alpha
+                        + (output_series[row - 1] * (1 - alpha)))
 
         # Exponential sum used in ADX calculation
         else:
             # Initialize with sum
-            output_series.iloc[start + time_period - 1] = (
-                input_series.iloc[start:(start + time_period - 1)].sum()
-                - (input_series.iloc[start:(start + time_period - 1)].sum()
+            output_series[start + time_period - 1] = (
+                input_series[start:(start + time_period - 1)].sum()
+                - (input_series[start:(start + time_period - 1)].sum()
                    / time_period)
-                + input_series.iloc[start + time_period - 1])
+                + input_series[start + time_period - 1])
 
             # Smooth the True Range using periods specified
             for row in range(start + time_period, len(input_series)):
-                output_series.iloc[row] = (
-                    input_series.iloc[row] +
-                    output_series.iloc[row - 1] -
-                    (output_series.iloc[row - 1] / time_period)
+                output_series[row] = (
+                    input_series[row] +
+                    output_series[row - 1] -
+                    (output_series[row - 1] / time_period)
                     )
 
         return output_series
