@@ -26,9 +26,9 @@ $ pip install technicalmethods
 
 Install in a new environment using Python venv:
 
-Create base environment of Python 3.11
+Create base environment of Python 3.13
 ```
-$ py -3.11 -m venv .venv
+$ py -3.13 -m venv .venv
 ```
 Activate new environment
 ```
@@ -59,7 +59,7 @@ $ activate techmeth
 ```
 Install Python
 ```
-(techmeth) $ conda install python==3.9
+(techmeth) $ conda install python==3.13
 ```
 Install Spyder
 ```
