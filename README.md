@@ -49,29 +49,6 @@ $ (.venv) python -m pip install technicalmethods
 
 &nbsp;
 
-To install in new environment using anaconda:
-```
-$ conda create --name techmeth
-```
-Activate new environment
-```
-$ activate techmeth
-```
-Install Python
-```
-(techmeth) $ conda install python==3.13
-```
-Install Spyder
-```
-(techmeth) $ conda install spyder
-```
-Install technicalmethods
-```
-(techmeth) $ python -m pip install technicalmethods
-```
-
-&nbsp;
-
 ### Setup
 Import csv of OHLC data using pandas
 ```
