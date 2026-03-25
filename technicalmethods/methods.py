@@ -393,6 +393,147 @@ class Indicators():
 
 
     @staticmethod
+    def Hurst(
+        close: pd.Series | np.ndarray,
+        time_period: int = 100,
+        min_lag: int = 10,
+        max_lag: int | None = None,
+        num_lags: int = 20) -> np.ndarray:
+        """
+        Calculate the Hurst Exponent via Rescaled Range (R/S) analysis.
+
+        H < 0.5 : Mean-reverting series.
+        H = 0.5 : Random walk.
+        H > 0.5 : Trending series.
+
+        Parameters
+        ----------
+        close : Series or ndarray
+            Time series of closing prices.
+        time_period : int, optional
+            Rolling window length in bars. The default is 100.
+        min_lag : int, optional
+            Minimum sub-period length for R/S regression. Must be >= 2.
+            The default is 10.
+        max_lag : int or None, optional
+            Maximum sub-period length for R/S regression. Must be <=
+            time_period // 2 to ensure at least two non-overlapping
+            sub-series at the largest lag. Defaults to time_period // 2.
+        num_lags : int, optional
+            Number of log-spaced lag values used in the regression.
+            The default is 20.
+
+        Returns
+        -------
+        np.ndarray
+            Rolling Hurst exponent of the same length as close, with
+            NaN for the first (time_period - 1) values.
+
+        Raises
+        ------
+        ValueError
+            If min_lag < 2.
+            If max_lag < min_lag.
+            If max_lag > time_period // 2.
+            If fewer than 2 distinct lag values are generated.
+
+        """
+        close = np.array(close, dtype=float)
+        n = len(close)
+
+        if max_lag is None:
+            max_lag = time_period // 2
+
+        if min_lag < 2:
+            raise ValueError(f"min_lag must be >= 2; received {min_lag}.")
+        if max_lag < min_lag:
+            raise ValueError(
+                f"max_lag ({max_lag}) must be >= min_lag ({min_lag}).")
+        if max_lag > time_period // 2:
+            raise ValueError(
+                f"max_lag ({max_lag}) must be <= time_period // 2 "
+                f"({time_period // 2}) to ensure at least two non-overlapping "
+                f"sub-series at the largest lag.")
+
+        # Build a deduplicated set of integer lags distributed evenly in log
+        # space. Log spacing prevents the OLS regression from being dominated
+        # by the many closely-clustered values that uniform spacing produces at
+        # larger lags
+        lags = np.unique(
+            np.round(
+                np.logspace(
+                    np.log10(min_lag),
+                    np.log10(max_lag),
+                    num=num_lags)
+            ).astype(int)
+        )
+        lags = lags[lags >= 2]
+
+        if len(lags) < 2:
+            raise ValueError(
+                "Fewer than 2 distinct lag values were generated. "
+                "Increase the range between min_lag and max_lag, or "
+                "increase num_lags.")
+
+        # Compute log returns for the full series. The resulting array has
+        # length n-1; index j corresponds to the return from close[j] to
+        # close[j+1]
+        log_returns = np.diff(np.log(close))
+
+        output = np.full(n, np.nan)
+
+        # Roll across the series. For output[i] the return window is
+        # log_returns[i - time_period + 1 : i], which has time_period - 1 values
+        for i in range(time_period - 1, n):
+            window = log_returns[i - time_period + 1: i]
+
+            rs_values = []
+            valid_lags = []
+
+            for lag in lags:
+
+                # Partition the window into non-overlapping sub-periods of
+                # length lag. Each sub-period yields one R/S observation;
+                # averaging across sub-periods reduces the variance of the
+                # estimate at this lag scale
+                n_sub_periods = len(window) // lag
+                if n_sub_periods < 2:
+                    # Require at least 2 sub-periods to produce a meaningful
+                    # average; skip this lag if the window is too short
+                    continue
+
+                rs_per_sub_period = []
+                for k in range(n_sub_periods):
+                    sub_period = window[k * lag: (k + 1) * lag]
+
+                    s = sub_period.std(ddof=1)
+                    if s == 0.0 or np.isnan(s):
+                        continue
+
+                    # Mean-adjust the sub-period and cumulate to obtain the
+                    # deviation path, then compute R as the range of that path
+                    mean_adj = sub_period - sub_period.mean()
+                    cumsum = np.cumsum(mean_adj)
+                    r = cumsum.max() - cumsum.min()
+
+                    rs_per_sub_period.append(r / s)
+
+                if len(rs_per_sub_period) > 0:
+                    rs_values.append(np.mean(rs_per_sub_period))
+                    valid_lags.append(lag)
+
+            if len(valid_lags) < 2:
+                continue
+
+            # Fit log(R/S) = H * log(lag) + C via OLS. The slope is the
+            # Hurst exponent for this window
+            slope, *_ = linregress(np.log(valid_lags), np.log(rs_values))
+            output[i] = slope
+
+        return output
+
+
+    @staticmethod
     def williams_r(
         high: pd.Series | np.ndarray,
         low: pd.Series | np.ndarray,
